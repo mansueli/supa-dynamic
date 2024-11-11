@@ -9,7 +9,10 @@ CREATE OR REPLACE FUNCTION edge.edge_wrapper(
     timeout_ms INTEGER DEFAULT 5000,
     max_retries INTEGER DEFAULT 0,
     allowed_regions TEXT[] DEFAULT NULL
-) RETURNS jsonb AS $$
+) RETURNS jsonb 
+   SET search_path = ''
+   LANGUAGE plpgsql
+AS $$
 DECLARE
     retry_count INTEGER := 0;
     retry_delays DOUBLE PRECISION[] := ARRAY[0, 0.250, 0.500, 1.000, 2.500, 5.000];
@@ -83,10 +86,9 @@ BEGIN
                 END IF;
         END;
     END LOOP;
-
     RETURN response_json;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE OR REPLACE FUNCTION edge.http_request(
     url TEXT,
@@ -95,7 +97,10 @@ CREATE OR REPLACE FUNCTION edge.http_request(
     params JSONB DEFAULT '{}'::jsonb,
     payload JSONB DEFAULT '{}'::jsonb,
     timeout_ms INTEGER DEFAULT 5000
-) RETURNS jsonb AS $$
+) RETURNS jsonb
+   LANGUAGE plpgsql
+   SET search_path = ''
+AS $$
 DECLARE
     http_response extensions.http_response;
     status_code integer := 0;
@@ -132,11 +137,12 @@ BEGIN
 
     RETURN jsonb_build_object('status_code', status_code, 'response', response_json);
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 
 CREATE OR REPLACE FUNCTION edge.get_secret(secret_name text) RETURNS text
     LANGUAGE "plpgsql"
+    SET search_path = ''
     AS $$
 DECLARE
     decrypted text;
